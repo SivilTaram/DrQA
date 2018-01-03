@@ -64,8 +64,9 @@ LOG_PRE_BATCH = 10
 DATA_FILE = "SQuAD/data.msgpack"
 META_FILE = "SQuAD/meta.msgpack"
 
-MODEL_DIR = "Model"
-MAX_CHECKPOINT = 10
+MODEL_DIR = "checkpoints"
+# 最多有多少个epoch
+MAX_CHECKPOINT = 5
 # 过1个epoch评估1次性能
 EVAL_PER_EPOCH = 1
 

@@ -5,6 +5,7 @@ import re
 from collections import Counter
 import string
 
+
 class BatchGen:
     def __init__(self, data, evaluation=False):
         """

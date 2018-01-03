@@ -111,8 +111,8 @@ class DocReaderModel(object):
 
     def reset_parameters(self):
         # Reset fixed embeddings to original value
-        if self.opt['tune_partial'] > 0:
-            offset = self.opt['tune_partial'] + 2
+        if config.TUNE_PARTIAL > 0:
+            offset = config.TUNE_PARTIAL + 2
             if offset < self.network.embedding.weight.data.size(0):
                 self.network.embedding.weight.data[offset:] \
                     = self.network.fixed_embedding
@@ -129,7 +129,7 @@ class DocReaderModel(object):
         }
         try:
             torch.save(params, filename)
-            logger.info('Save Model to {0}'.format(filename))
+            logger.info('Save model to {0}'.format(filename))
         except Exception as e:
             logger.warning('[ WARN: Saving failed... continuing anyway. ]')
             logger.warning('[ StackTrace: {0}]'.format(e))

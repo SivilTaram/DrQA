@@ -1,10 +1,11 @@
 import os
-from shutil import copyfile
 from datetime import datetime
+from shutil import copyfile
 import msgpack
-from DocReader.model import DocReaderModel
-from DocReader.batch_helper import *
+from DocReader.model.batch_helper import *
+
 import config
+from DocReader.model.model import DocReaderModel
 
 
 def load_data():
@@ -13,7 +14,6 @@ def load_data():
     with open(config.META_FILE, 'rb') as f:
         meta = msgpack.load(f, encoding='utf8')
     embedding = torch.Tensor(meta['Embedding'])
-    option['pretrained_words'] = True
     # 自动获取embedding的维度与vocabulary大小
     option['vocab_size'] = embedding.size(0)
     option['embedding_dim'] = embedding.size(1)
@@ -124,23 +124,23 @@ class TrainManager:
                 if f1 > self.best_f1:
                     self.best_f1 = f1
                     copyfile(model_file, os.path.join(self.model_dir, 'Best_Model.pt'))
-                    config.train_logger.info('[New Best Model Saved.] Epoch {0}'.format(epoch))
+                    config.train_logger.info('[New Best model Saved.] Epoch {0}'.format(epoch))
             else:
                 config.train_logger.info('[Up to limit. Goodbye]')
                 break
 
 
 if __name__ == '__main__':
-    # set random seed
+    # 设定随机种子，主要是防止数据每次训练时都从不同的方向进行shuffle,不利于调参
     seed = 1706123
     random.seed(seed)
     torch.manual_seed(seed)
     if config.USE_GPU:
         torch.cuda.manual_seed(seed)
-    # Load Data
+    # 加载数据
     train, dev, dev_truth, embedding, opt = load_data()
     config.train_logger.info('[Data loaded.]')
-    # Train Network
+    # 训练
     config.train_logger.info('[Network Config] {0}'.format(opt))
     manager = TrainManager(train=train, dev=dev, dev_truth=dev_truth, embedding=embedding)
     manager.load_model(opt)
