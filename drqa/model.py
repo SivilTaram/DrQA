@@ -27,20 +27,20 @@ class DocReaderModel(object):
     architecture, saving, updating examples, and predicting examples.
     """
 
-    def __init__(self, opt, embedding=None, state_dict=None):
+    def __init__(self, opt, embedding=None, resume_dict=None):
         # Book-keeping.
         self.opt = opt
-        self.updates = state_dict['updates'] if state_dict else 0
+        self.updates = resume_dict['updates'] if resume_dict else 0
         self.train_loss = AverageMeter()
 
         # Building network.
         self.network = RnnDocReader(opt, embedding=embedding)
-        if state_dict:
+        if resume_dict:
             new_state = set(self.network.state_dict().keys())
-            for k in list(state_dict['network'].keys()):
+            for k in list(resume_dict['network'].keys()):
                 if k not in new_state:
-                    del state_dict['network'][k]
-            self.network.load_state_dict(state_dict['network'])
+                    del resume_dict['network'][k]
+            self.network.load_state_dict(resume_dict['network'])
 
         # Building optimizer.
         parameters = [p for p in self.network.parameters() if p.requires_grad]
@@ -53,8 +53,8 @@ class DocReaderModel(object):
                                           weight_decay=opt['weight_decay'])
         else:
             raise RuntimeError('Unsupported optimizer: %s' % opt['optimizer'])
-        if state_dict:
-            self.optimizer.load_state_dict(state_dict['optimizer'])
+        if resume_dict:
+            self.optimizer.load_state_dict(resume_dict['optimizer'])
 
     def update(self, ex):
         # Train mode
@@ -146,8 +146,9 @@ class DocReaderModel(object):
         try:
             torch.save(params, filename)
             logger.info('model saved to {}'.format(filename))
-        except BaseException:
-            logger.warn('[ WARN: Saving failed... continuing anyway. ]')
+        except Exception as e:
+            logger.warning('[ WARN: Saving failed... continuing anyway. ]')
+            logger.warning('[ StackTrace: {0}]'.format(e))
 
     def cuda(self):
         self.network.cuda()
