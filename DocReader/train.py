@@ -23,8 +23,8 @@ def load_data():
     train = data['train']
     data['dev'].sort(key=lambda x: len(x[1]))
     dev = [x[:-1] for x in data['dev']]
-    dev_y = [x[-1] for x in data['dev']]
-    return train, dev, dev_y, embedding, option
+    dev_truth = [x[-1] for x in data['dev']]
+    return train, dev, dev_truth, embedding, option
 
 
 class TrainManager:
@@ -46,7 +46,7 @@ class TrainManager:
         config.train_logger.info('[Data Loaded.]')
         # 重建之前的模型
         if config.RESUME:
-            resume_file = os.path.join(self.model_dir,'Best_Model.pt')
+            resume_file = os.path.join(self.model_dir, 'Best_Model.pt')
             if os.path.isdir(self.model_dir):
                 if not os.path.isfile(resume_file):
                     # 寻找最后创建的模型，自动从该模型开始继续训练

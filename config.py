@@ -32,6 +32,7 @@ USE_GPU = False
 Predict Config
 """
 TRANS_FILE = "SQuAD/transform.msgpack"
+PREDICT_MODEL = "Best_Model.pt"
 
 """
 Network Config
@@ -54,6 +55,7 @@ GRAD_CLIPPING = 10
 # 微调词向量前1000
 TUNE_PARTIAL = 1000
 PRETRAIN_EMBEDDING = True
+
 """
 Log Config
 """

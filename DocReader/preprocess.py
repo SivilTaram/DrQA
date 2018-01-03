@@ -86,6 +86,7 @@ class PackData:
                                                for context in contexts
                                                for token in context])
         counter = context_counter + question_counter
+        # 按照词频对vocabulary进行排序，以满足后面 fine tuning 前1000个词向量的需求
         vocab = sorted([t for t in question_counter if t in self.vector_vocab], key=question_counter.get,
                        reverse=True)
         vocab += sorted([t for t in context_counter.keys() - question_counter.keys() if t in self.vector_vocab],

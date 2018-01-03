@@ -45,11 +45,13 @@ class BatchGen:
 
             feature_len = len(batch[2][0][0])
 
+            # 构造人工feature, 包括 em,lower,lemma和term-frequency
             context_feature = torch.Tensor(batch_size, context_len, feature_len).fill_(0)
             for i, doc in enumerate(batch[2]):
                 for j, feature in enumerate(doc):
                     context_feature[i, j, :] = torch.Tensor(feature)
 
+            # 构造 POSTag feature, 采用 one-hot 编码
             context_tag = torch.Tensor(batch_size, context_len, config.POS_DIM).fill_(0)
             for i, doc in enumerate(batch[3]):
                 for j, tag in enumerate(doc):
@@ -65,6 +67,7 @@ class BatchGen:
             for i, doc in enumerate(batch[5]):
                 question_id[i, :len(doc)] = torch.LongTensor(doc)
 
+            # 如果为0，则代表其为padding
             context_mask = torch.eq(context_id, 0)
             question_mask = torch.eq(question_id, 0)
             text = list(batch[6])
