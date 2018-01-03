@@ -69,6 +69,7 @@ class BatchGen:
             question_mask = torch.eq(question_id, 0)
             text = list(batch[6])
             span = list(batch[7])
+            # 训练集与测试集上batch里携带的信息不同
             if not self.eval:
                 y_s = torch.LongTensor(batch[8])
                 y_e = torch.LongTensor(batch[9])
