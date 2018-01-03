@@ -7,14 +7,13 @@ import torch
 import torch.optim as optim
 import torch.nn.functional as F
 import numpy as np
-import logging
 
 from torch.autograd import Variable
 from .utils import AverageMeter
 from .rnn_reader import RnnDocReader
-from config import *
+import config
 
-logger = logging.getLogger(__name__)
+logger = config.logging.getLogger(__name__)
 
 
 class DocReaderModel(object):
@@ -40,14 +39,14 @@ class DocReaderModel(object):
         # Building optimizer.
         parameters = [p for p in self.network.parameters() if p.requires_grad]
         self.optimizer = optim.Adamax(parameters,
-                                      weight_decay=opt['weight_decay'])
+                                      weight_decay=config.WEIGHT_DECAY)
 
     def update(self, ex):
         # Train mode
         self.network.train()
 
         # Transfer to GPU
-        if USE_GPU:
+        if config.USE_GPU:
             inputs = [Variable(e.enable_gpu(async=True)) for e in ex[:7]]
             target_s = Variable(ex[7].enable_gpu(async=True))
             target_e = Variable(ex[8].enable_gpu(async=True))
@@ -68,8 +67,7 @@ class DocReaderModel(object):
         loss.backward()
 
         # Clip gradients
-        torch.nn.utils.clip_grad_norm(self.network.parameters(),
-                                      self.opt['grad_clipping'])
+        torch.nn.utils.clip_grad_norm(self.network.parameters(), config.GRAD_CLIPPING)
 
         # Update parameters
         self.optimizer.step()
@@ -83,7 +81,7 @@ class DocReaderModel(object):
         self.network.eval()
 
         # Transfer to GPU
-        if USE_GPU:
+        if config.USE_GPU:
             inputs = [Variable(e.enable_gpu(async=True), volatile=True)
                       for e in ex[:7]]
         else:
@@ -100,7 +98,7 @@ class DocReaderModel(object):
         text = ex[-2]
         spans = ex[-1]
         predictions = []
-        max_len = self.opt['max_len'] or score_s.size(1)
+        max_len = config.MAX_SPAN_LEN or score_s.size(1)
         for i in range(score_s.size(0)):
             scores = torch.ger(score_s[i], score_e[i])
             scores.triu_().tril_(max_len - 1)

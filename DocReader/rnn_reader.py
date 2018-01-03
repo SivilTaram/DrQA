@@ -1,12 +1,7 @@
-# Copyright (c) 2017-present, Facebook, Inc.
-# All rights reserved.
-# This source code is licensed under the BSD-style license found in the
-# LICENSE file in the root directory of this source tree. An additional grant
-# of patent rights can be found in the PATENTS file in the same directory.
 import torch
 import torch.nn as nn
 from . import layers
-from config import *
+import config
 
 
 class RnnDocReader(nn.Module):
@@ -18,19 +13,17 @@ class RnnDocReader(nn.Module):
         self.opt = opt
 
         # Word embeddings
-        if opt['pretrained_words']:
+        if config.PRETRAIN_EMBEDDING:
             assert embedding is not None
             self.embedding = nn.Embedding(embedding.size(0),
                                           embedding.size(1),
                                           padding_idx=padding_idx)
             self.embedding.weight.data[2:, :] = embedding[2:, :]
-            if opt['fix_embeddings']:
-                assert opt['tune_partial'] == 0
+            if config.TUNE_PARTIAL <= 0:
                 for p in self.embedding.parameters():
                     p.requires_grad = False
-            elif opt['tune_partial'] > 0:
-                assert opt['tune_partial'] + 2 < embedding.size(0)
-                fixed_embedding = embedding[opt['tune_partial'] + 2:]
+            else:
+                fixed_embedding = embedding[config.TUNE_PARTIAL + 2:]
                 self.register_buffer('fixed_embedding', fixed_embedding)
                 self.fixed_embedding = fixed_embedding
         else:  # random initialized
@@ -40,40 +33,40 @@ class RnnDocReader(nn.Module):
         # Projection for attention weighted question
         self.qemb_match = layers.SeqAttnMatch(opt['embedding_dim'])
 
-        # Input size to RNN: word emb + question emb + manual features
-        doc_input_size = opt['embedding_dim'] + opt['num_features']
+        # Input size to RNN: word emb + question emb + exact math features + term frequency
+        doc_input_size = opt['embedding_dim'] + config.MANUAL_FEATURE_NUM
         doc_input_size += opt['embedding_dim']
-        doc_input_size += opt['pos_size']
-        doc_input_size += opt['ner_size']
+        doc_input_size += config.POS_DIM
+        doc_input_size += config.NER_DIM
 
         # RNN document encoder
         self.doc_rnn = layers.StackedBRNN(
             input_size=doc_input_size,
-            hidden_size=HIDDEN_SIZE,
-            num_layers=DOC_LAYER,
-            dropout_rate=RNN_DROPOUT_RATE,
-            dropout_output=OUTPUT_DROPOUT,
-            concat_layers=CONTACT_RNN_LAYER,
-            padding=RNN_PADDING,
+            hidden_size=config.HIDDEN_SIZE,
+            num_layers=config.DOC_LAYER,
+            dropout_rate=config.RNN_DROPOUT_RATE,
+            dropout_output=config.OUTPUT_DROPOUT,
+            concat_layers=config.CONTACT_RNN_LAYER,
+            padding=config.RNN_PADDING,
         )
 
         # RNN question encoder
         self.question_rnn = layers.StackedBRNN(
             input_size=opt['embedding_dim'],
-            hidden_size=HIDDEN_SIZE,
-            num_layers=QUES_LAYER,
-            dropout_rate=RNN_DROPOUT_RATE,
-            dropout_output=OUTPUT_DROPOUT,
-            concat_layers=CONTACT_RNN_LAYER,
-            padding=RNN_PADDING,
+            hidden_size=config.HIDDEN_SIZE,
+            num_layers=config.QUES_LAYER,
+            dropout_rate=config.RNN_DROPOUT_RATE,
+            dropout_output=config.OUTPUT_DROPOUT,
+            concat_layers=config.CONTACT_RNN_LAYER,
+            padding=config.RNN_PADDING,
         )
 
         # Output sizes of rnn encoders
-        doc_hidden_size = 2 * HIDDEN_SIZE
-        question_hidden_size = 2 * HIDDEN_SIZE
-        if CONTACT_RNN_LAYER:
-            doc_hidden_size *= DOC_LAYER
-            question_hidden_size *= QUES_LAYER
+        doc_hidden_size = 2 * config.HIDDEN_SIZE
+        question_hidden_size = 2 * config.HIDDEN_SIZE
+        if config.CONTACT_RNN_LAYER:
+            doc_hidden_size *= config.DOC_LAYER
+            question_hidden_size *= config.QUES_LAYER
 
         # Question merging
         self.self_attn = layers.LinearSeqAttn(question_hidden_size)
@@ -103,14 +96,14 @@ class RnnDocReader(nn.Module):
         x2_emb = self.embedding(x2)
 
         # Dropout on embeddings
-        if EMBEDDING_DROPOUT_RATE > 0:
-            x1_emb = nn.functional.dropout(x1_emb, p=EMBEDDING_DROPOUT_RATE,
+        if config.EMBEDDING_DROPOUT_RATE > 0:
+            x1_emb = nn.functional.dropout(x1_emb, p=config.EMBEDDING_DROPOUT_RATE,
                                            training=self.training)
-            x2_emb = nn.functional.dropout(x2_emb, p=EMBEDDING_DROPOUT_RATE,
+            x2_emb = nn.functional.dropout(x2_emb, p=config.EMBEDDING_DROPOUT_RATE,
                                            training=self.training)
 
         drnn_input_list = [x1_emb, x1_f]
-        # 增加带注意力的问题表示
+        # 增加 带注意力的问题表示
         x2_weighted_emb = self.qemb_match(x1_emb, x2_emb, x2_mask)
         drnn_input_list.append(x2_weighted_emb)
         # 增加 POS Feature
