@@ -32,19 +32,19 @@ class PackData:
         self.embedding = None
 
     def clean_normalize_data(self):
-        logger.info('Start Data Prepocessing...')
+        prep_logger.info('Start Data Prepocessing...')
         train_data = file_formatter(TRAINING_FILE)
         dev_data = file_formatter(DEV_FILE)
-        logger.info('File Convert Success.')
-        logger.info('Train Sample Data:{0}'.format(train_data[0]))
-        logger.info('Dev Sample Data:{0}'.format(dev_data[0]))
+        prep_logger.info('File Convert Success.')
+        prep_logger.info('Train Sample Data:{0}'.format(train_data[0]))
+        prep_logger.info('Dev Sample Data:{0}'.format(dev_data[0]))
 
         # 训练集与验证集做标注
         train_data = list(map(annotate, train_data))
         self.dev_data = list(map(annotate, dev_data))
         # 过滤掉与分词结果边界划分不一致的句子
         self.train_data = filter_inconsistent(train_data)
-        logger.info('Clean Data and Normalized.')
+        prep_logger.info('Clean Data and Normalized.')
 
     def build_vector_vocab(self):
         # 加载词向量文件
@@ -72,7 +72,7 @@ class PackData:
                     embed_counts[token_id] += 1
                     embeddings[token_id] += [float(v) for v in elems[1:]]
         self.embedding = embeddings / embed_counts.reshape((-1, 1))
-        logger.info('Loaded Embedding File Successfully.')
+        prep_logger.info('Loaded Embedding File Successfully.')
 
     def build_vocab(self):
         full_data = self.full_data
@@ -99,8 +99,8 @@ class PackData:
         full_data = self.full_data
         entity_counter = collections.Counter(w for row in full_data for w in row[4])
         self.vocab_entity = sorted(entity_counter, key=entity_counter.get, reverse=True)
-        logger.info('Vocabulary size: {0}'.format(len(self.vocab)))
-        logger.info('Found {0} Entity tags: {1}'.format(len(self.vocab_entity), self.vocab_entity))
+        prep_logger.info('Vocabulary size: {0}'.format(len(self.vocab)))
+        prep_logger.info('Found {0} Entity tags: {1}'.format(len(self.vocab_entity), self.vocab_entity))
 
         self.pos_encoder = {w: i for i, w in enumerate(self.vocab_pos)}
         self.entity_encoder = {w: i for i, w in enumerate(self.vocab_entity)}
@@ -120,7 +120,7 @@ class PackData:
     def transform(self):
         self.train_data = list(map(self.factorize, self.train_data))
         self.dev_data = list(map(self.factorize, self.dev_data))
-        logger.info('POS, Entity, Vocabulary Factorized & Transform.')
+        prep_logger.info('POS, Entity, Vocabulary Factorized & Transform.')
 
     def dumps(self):
         meta = {
@@ -148,7 +148,7 @@ class PackData:
         with open('SQuAD/transform.msgpack', 'wb') as f:
             msgpack.dump(trans, f)
 
-        logger.info('Save Data to Disk.')
+        prep_logger.info('Save Data to Disk.')
 
     @property
     def full_data(self):

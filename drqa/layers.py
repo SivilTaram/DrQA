@@ -18,7 +18,7 @@ from torch.autograd import Variable
 
 class StackedBRNN(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers,
-                 dropout_rate=0, dropout_output=False, rnn_type=nn.LSTM,
+                 dropout_rate=0, dropout_output=False,
                  concat_layers=False, padding=False):
         super(StackedBRNN, self).__init__()
         self.padding = padding
@@ -26,12 +26,15 @@ class StackedBRNN(nn.Module):
         self.dropout_rate = dropout_rate
         self.num_layers = num_layers
         self.concat_layers = concat_layers
+        """
+        多层LSTM
+        """
         self.rnns = nn.ModuleList()
         for i in range(num_layers):
             input_size = input_size if i == 0 else 2 * hidden_size
-            self.rnns.append(rnn_type(input_size, hidden_size,
-                                      num_layers=1,
-                                      bidirectional=True))
+            self.rnns.append(nn.LSTM(input_size, hidden_size,
+                                     num_layers=1,
+                                     bidirectional=True))
 
     def forward(self, x, x_mask):
         """Can choose to either handle or ignore variable length sequences.

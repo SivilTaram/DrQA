@@ -12,12 +12,7 @@ import logging
 from torch.autograd import Variable
 from .utils import AverageMeter
 from .rnn_reader import RnnDocReader
-
-# Modification:
-#   - change the logger name
-#   - save & load optimizer state dict
-#   - change the dimension of inputs (for POS and NER features)
-# Origin: https://github.com/facebookresearch/ParlAI/tree/master/parlai/agents/drqa
+from config import *
 
 logger = logging.getLogger(__name__)
 
@@ -44,27 +39,18 @@ class DocReaderModel(object):
 
         # Building optimizer.
         parameters = [p for p in self.network.parameters() if p.requires_grad]
-        if opt['optimizer'] == 'sgd':
-            self.optimizer = optim.SGD(parameters, opt['learning_rate'],
-                                       momentum=opt['momentum'],
-                                       weight_decay=opt['weight_decay'])
-        elif opt['optimizer'] == 'adamax':
-            self.optimizer = optim.Adamax(parameters,
-                                          weight_decay=opt['weight_decay'])
-        else:
-            raise RuntimeError('Unsupported optimizer: %s' % opt['optimizer'])
-        if resume_dict:
-            self.optimizer.load_state_dict(resume_dict['optimizer'])
+        self.optimizer = optim.Adamax(parameters,
+                                      weight_decay=opt['weight_decay'])
 
     def update(self, ex):
         # Train mode
         self.network.train()
 
         # Transfer to GPU
-        if self.opt['cuda']:
-            inputs = [Variable(e.cuda(async=True)) for e in ex[:7]]
-            target_s = Variable(ex[7].cuda(async=True))
-            target_e = Variable(ex[8].cuda(async=True))
+        if USE_GPU:
+            inputs = [Variable(e.enable_gpu(async=True)) for e in ex[:7]]
+            target_s = Variable(ex[7].enable_gpu(async=True))
+            target_e = Variable(ex[8].enable_gpu(async=True))
         else:
             inputs = [Variable(e) for e in ex[:7]]
             target_s = Variable(ex[7])
@@ -97,8 +83,8 @@ class DocReaderModel(object):
         self.network.eval()
 
         # Transfer to GPU
-        if self.opt['cuda']:
-            inputs = [Variable(e.cuda(async=True), volatile=True)
+        if USE_GPU:
+            inputs = [Variable(e.enable_gpu(async=True), volatile=True)
                       for e in ex[:7]]
         else:
             inputs = [Variable(e, volatile=True) for e in ex[:7]]
@@ -135,7 +121,7 @@ class DocReaderModel(object):
 
     def save(self, filename, epoch):
         params = {
-            'state_dict': {
+            'resume_dict': {
                 'network': self.network.state_dict(),
                 'optimizer': self.optimizer.state_dict(),
                 'updates': self.updates
@@ -145,10 +131,10 @@ class DocReaderModel(object):
         }
         try:
             torch.save(params, filename)
-            logger.info('model saved to {}'.format(filename))
+            logger.info('Save Model to {0}'.format(filename))
         except Exception as e:
             logger.warning('[ WARN: Saving failed... continuing anyway. ]')
             logger.warning('[ StackTrace: {0}]'.format(e))
 
-    def cuda(self):
+    def enable_gpu(self):
         self.network.cuda()
