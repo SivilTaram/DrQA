@@ -84,6 +84,7 @@ class TrainManager:
         batches = BatchGen(self.train)
         start = datetime.now()
         for i, batch in enumerate(batches):
+            self.model.enable_gpu()
             self.model.update(batch)
             if i % config.LOG_PRE_BATCH == 0:
                 config.train_logger.info('Epoch [{0:2}] Batch [{1:6}] Train Loss [{2:.5f}] Remaining[{3}]'.format(
