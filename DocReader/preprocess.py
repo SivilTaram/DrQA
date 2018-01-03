@@ -130,14 +130,14 @@ class PackData:
             'NamedEntity': self.vocab_entity,
             'Embedding': self.embedding.tolist()
         }
-        with open('SQuAD/meta.msgpack', 'wb') as f:
+        with open(META_FILE, 'wb') as f:
             msgpack.dump(meta, f)
 
         result = {
             'train': self.train_data,
             'dev': self.dev_data
         }
-        with open('SQuAD/data.msgpack', 'wb') as f:
+        with open(DATA_FILE, 'wb') as f:
             msgpack.dump(result, f)
 
         trans = {
@@ -146,7 +146,7 @@ class PackData:
             'EntityEncoder': self.entity_encoder
         }
 
-        with open('SQuAD/transform.msgpack', 'wb') as f:
+        with open(TRANS_FILE, 'wb') as f:
             msgpack.dump(trans, f)
 
         prep_logger.info('Save Data to Disk.')

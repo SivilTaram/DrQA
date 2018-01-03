@@ -47,9 +47,9 @@ class DocReaderModel(object):
 
         # Transfer to GPU
         if config.USE_GPU:
-            inputs = [Variable(e.enable_gpu(async=True)) for e in ex[:7]]
-            target_s = Variable(ex[7].enable_gpu(async=True))
-            target_e = Variable(ex[8].enable_gpu(async=True))
+            inputs = [Variable(e.cuda(async=True)) for e in ex[:7]]
+            target_s = Variable(ex[7].cuda(async=True))
+            target_e = Variable(ex[8].cuda(async=True))
         else:
             inputs = [Variable(e) for e in ex[:7]]
             target_s = Variable(ex[7])
@@ -82,7 +82,7 @@ class DocReaderModel(object):
 
         # Transfer to GPU
         if config.USE_GPU:
-            inputs = [Variable(e.enable_gpu(async=True), volatile=True)
+            inputs = [Variable(e.cuda(async=True), volatile=True)
                       for e in ex[:7]]
         else:
             inputs = [Variable(e, volatile=True) for e in ex[:7]]
@@ -118,6 +118,7 @@ class DocReaderModel(object):
                     = self.network.fixed_embedding
 
     def save(self, filename, epoch):
+        self.network.cpu()
         params = {
             'resume_dict': {
                 'network': self.network.state_dict(),

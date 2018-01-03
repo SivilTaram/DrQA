@@ -32,7 +32,7 @@ USE_GPU = False
 Predict Config
 """
 TRANS_FILE = "SQuAD/transform.msgpack"
-PREDICT_MODEL = "Best_Model.pt"
+PREDICT_MODEL = "best_model.pt"
 
 """
 Network Config

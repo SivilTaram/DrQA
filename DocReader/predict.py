@@ -11,12 +11,11 @@ class Predictor:
     def __init__(self):
         self.gpu = config.USE_GPU
         # 加载encoders
-        with open(config.META_FILE, 'rb') as f:
+        with open(config.TRANS_FILE, 'rb') as f:
             encoders = msgpack.load(f, encoding='utf8')
         self.vocab_encoder = encoders['VocabEncoder']
         self.pos_encoder = encoders['POSEncoder']
         self.entity_encoder = encoders['EntityEncoder']
-
         # 加载embedding
         with open(config.META_FILE, 'rb') as f:
             meta = msgpack.load(f, encoding='utf8')
@@ -26,14 +25,14 @@ class Predictor:
         option = {'vocab_size': embedding.size(0), 'embedding_dim': embedding.size(1)}
         model_file = os.path.join(config.MODEL_DIR, config.PREDICT_MODEL)
 
-        # 加载模型，用于预测
-        checkpoint = torch.load(model_file)
-        resume_dict = checkpoint['resume_dict']
+        # 加载模型，注意 GPU 张量的改变
+        checkpoint = torch.load(model_file,  map_location=lambda storage, loc: storage)
+        resume_dict = checkpoint['state_dict']
         self.model = DocReaderModel(option, embedding, resume_dict)
 
     def get_prediction(self, question, context):
         # 构造row
-        row = [1, context, question]
+        row = (1, context, question)
         features = annotate(row)
         assert len(features) == 8
         # 构造因子化后的feature
