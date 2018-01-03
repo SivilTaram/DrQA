@@ -9,9 +9,9 @@ MANUAL_FEATURE_NUM = 4
 """
 Preprocess Config
 """
-TRAINING_FILE = 'SQuAD/train-v1.1.json'
-DEV_FILE = 'SQuAD/dev-v1.1.json'
-EMBEDDING_FILE = 'embedding/glove.840B.300d.txt'
+TRAINING_FILE = 'DocReader/SQuAD/train-v1.1.json'
+DEV_FILE = 'DocReader/SQuAD/dev-v1.1.json'
+EMBEDDING_FILE = 'DocReader/embedding/glove.840B.300d.txt'
 EMBEDDING_DIM = 300
 
 UNK_ID = 1
@@ -31,7 +31,7 @@ USE_GPU = False
 """
 Predict Config
 """
-TRANS_FILE = "SQuAD/transform.msgpack"
+TRANS_FILE = "DocReader/SQuAD/transform.msgpack"
 PREDICT_MODEL = "best_model.pt"
 
 """
@@ -63,10 +63,10 @@ TRAIN_LOG = 'train.log'
 # 每过10个batch打一次log记录loss
 LOG_PRE_BATCH = 10
 
-DATA_FILE = "SQuAD/data.msgpack"
-META_FILE = "SQuAD/meta.msgpack"
+DATA_FILE = "DocReader/SQuAD/data.msgpack"
+META_FILE = "DocReader/SQuAD/meta.msgpack"
 
-MODEL_DIR = "checkpoints"
+MODEL_DIR = "DocReader/checkpoints"
 # 最多有多少个epoch
 MAX_CHECKPOINT = 5
 # 过1个epoch评估1次性能
