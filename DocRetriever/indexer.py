@@ -85,6 +85,7 @@ class Indexer:
     def search(self, question):
         # 去掉停用词的问题词组
         ques_tokens = self.processor.normalize_text(question)
+        print(ques_tokens)
         # 如果没有加载索引文件，则先加载
         if len(self.idf.keys()) == 0:
             self.restore()
@@ -92,7 +93,11 @@ class Indexer:
         # 文档名到词的tf映射
         tf_map = {}
         for token in ques_tokens:
-            index_ids = self.inverted_index[token]
+            if token in self.inverted_index:
+                index_ids = self.inverted_index[token]
+            else:
+                ids = {}
+                break
             for index_id in index_ids:
                 # 计算 tf-idf 值，利于后面的排序
                 file_name = index_id[0]
@@ -103,16 +108,27 @@ class Indexer:
                 ids = token_set
             else:
                 ids &= token_set
-        # 获得文件ID, 进行相关性排序, 取前三个
-        sorted_files = list(filter(lambda x: x in ids, sorted(tf_map.keys(), key=lambda d: d[1], reverse=True)))[:3]
+        # 获得文件ID, 进行相关性排序
+        sorted_files = list(filter(lambda x: x in ids, sorted(tf_map.keys(), key=lambda d: d[1], reverse=True)))
         # 寻找排序文件前3的各个段落
-        contexts = []
+        contexts = {}
         for file in sorted_files:
             with open(os.path.join(self.folder, file + ".txt")) as f:
                 data = json.load(f)
-            for paragraph in data['paragraphs']:
+            for i, paragraph in enumerate(data['paragraphs']):
+                paragraph_tokens = set(self.processor.normalize_text(paragraph))
+                votes = 0
                 for token in ques_tokens:
-                    if token in paragraph:
-                        contexts.append(paragraph)
-                        break
-        return contexts
+                    if token in paragraph_tokens:
+                        votes += 1
+                if votes >= 0.6 * len(ques_tokens) and len(paragraph) < 1500:
+                    contexts[paragraph] = votes
+        # 对段落的共现进行排序
+        sorted_context = list(sorted(contexts.keys(), key=lambda d: d[1], reverse=True))[:20]
+        return sorted_context
+
+
+if __name__ == "__main__":
+    indexer = Indexer("Demo")
+    indexer.build_index()
+    indexer.dumps()
