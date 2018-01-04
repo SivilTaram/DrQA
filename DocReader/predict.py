@@ -27,7 +27,7 @@ class Predictor:
 
         # 加载模型，注意 GPU 张量的改变
         checkpoint = torch.load(model_file,  map_location=lambda storage, loc: storage)
-        resume_dict = checkpoint['state_dict']
+        resume_dict = checkpoint['resume_dict']
         self.model = DocReaderModel(option, embedding, resume_dict)
 
     def get_prediction(self, question, context):
@@ -53,8 +53,7 @@ class Predictor:
             entity_dummy,
             question_ids
         ) + features[6:]
-        print(factorized_feature)
-        # 将因子化后的数据转换成一个
+        # 将因子化后的数据转换成一个batch
         predictions = []
         batches = BatchGen([factorized_feature], evaluation=True)
         for batch in batches:

@@ -76,7 +76,7 @@ class DocReaderModel(object):
         # Reset any partially fixed parameters (e.g. rare words)
         self.reset_parameters()
 
-    def predict(self, ex):
+    def eval(self, ex):
         # Eval mode
         self.network.eval()
 
@@ -106,6 +106,34 @@ class DocReaderModel(object):
             s_idx, e_idx = np.unravel_index(np.argmax(scores), scores.shape)
             s_offset, e_offset = spans[i][s_idx][0], spans[i][e_idx][1]
             predictions.append(text[i][s_offset:e_offset])
+
+        return predictions
+
+    def predict(self, ex):
+        # Eval mode
+        self.network.eval()
+
+        inputs = [Variable(e, volatile=True) for e in ex[:7]]
+
+        # Run forward
+        score_s, score_e = self.network(*inputs)
+
+        # Transfer to CPU/normal tensors for numpy ops
+        score_s = score_s.data.cpu()
+        score_e = score_e.data.cpu()
+
+        # Get argmax text spans
+        text = ex[-2]
+        spans = ex[-1]
+        predictions = []
+        max_len = config.MAX_SPAN_LEN or score_s.size(1)
+        for i in range(score_s.size(0)):
+            scores = torch.ger(score_s[i], score_e[i])
+            scores.triu_().tril_(max_len - 1)
+            scores = scores.numpy()
+            s_idx, e_idx = np.unravel_index(np.argmax(scores), scores.shape)
+            s_offset, e_offset = spans[i][s_idx][0], spans[i][e_idx][1]
+            predictions.append((text[i][s_offset:e_offset],scores[s_idx][e_idx]))
 
         return predictions
 

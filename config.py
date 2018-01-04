@@ -32,7 +32,7 @@ USE_GPU = False
 Predict Config
 """
 TRANS_FILE = "DocReader/SQuAD/transform.msgpack"
-PREDICT_MODEL = "best_model.pt"
+PREDICT_MODEL = "Best_Model-3.pt"
 
 """
 Network Config
@@ -55,6 +55,11 @@ GRAD_CLIPPING = 10
 # 微调词向量前1000
 TUNE_PARTIAL = 1000
 PRETRAIN_EMBEDDING = True
+
+"""
+Retriever Config
+"""
+STOPWORD_FILE = "DocRetriever/stopword.txt"
 
 """
 Log Config

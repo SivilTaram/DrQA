@@ -96,7 +96,7 @@ class TrainManager:
         batches = BatchGen(self.dev, evaluation=True)
         predictions = []
         for batch in batches:
-            predictions.extend(self.model.predict(batch))
+            predictions.extend(self.model.eval(batch))
         em, f1 = score(predictions, self.dev_truth)
         return em, f1
 
