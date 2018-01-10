@@ -133,7 +133,8 @@ class DocReaderModel(object):
             scores = scores.numpy()
             s_idx, e_idx = np.unravel_index(np.argmax(scores), scores.shape)
             s_offset, e_offset = spans[i][s_idx][0], spans[i][e_idx][1]
-            predictions.append((text[i][s_offset:e_offset],scores[s_idx][e_idx]))
+            # 在预测中加入了分数
+            predictions.append((text[i][s_offset:e_offset], scores[s_idx][e_idx]))
 
         return predictions
 
